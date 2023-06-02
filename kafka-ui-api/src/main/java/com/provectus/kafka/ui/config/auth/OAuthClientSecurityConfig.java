@@ -26,7 +26,6 @@ public class OAuthClientSecurityConfig extends AbstractAuthSecurityConfig {
 
     var httpClient = HttpClient.create()
         .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP).address(new InetSocketAddress("172.26.0.222", 3128)));
-
     accessTokenResponseClient.setWebClient(
         WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build());
 

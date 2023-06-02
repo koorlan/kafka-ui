@@ -53,9 +53,8 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
 
     return http.authorizeExchange().pathMatchers(AUTH_WHITELIST).permitAll().anyExchange().authenticated()
 
-        .and().oauth2Login(oauth2 -> oauth2.authenticationManager(loginAuthenticationManager))
-
-        .logout().logoutSuccessHandler(logoutHandler)
+        .and().oauth2Login(oauth2 -> oauth2.authenticationManager(loginAuthenticationManager)).logout()
+        .logoutSuccessHandler(logoutHandler)
 
         .and().csrf().disable().build();
   }
