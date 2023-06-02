@@ -47,57 +47,48 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
   private final OAuthProperties properties;
 
   @Bean
-  public SecurityWebFilterChain configure(ServerHttpSecurity http, OAuthLogoutSuccessHandler logoutHandler,ReactiveAuthenticationManager loginAuthenticationManager) {
+  public SecurityWebFilterChain configure(ServerHttpSecurity http, OAuthLogoutSuccessHandler logoutHandler,
+                                          ReactiveAuthenticationManager loginAuthenticationManager) {
     log.info("Configuring OAUTH2 authentication.");
 
-    return http.authorizeExchange()
-        .pathMatchers(AUTH_WHITELIST)
-        .permitAll()
-        .anyExchange()
-        .authenticated()
+    return http.authorizeExchange().pathMatchers(AUTH_WHITELIST).permitAll().anyExchange().authenticated()
 
-        .and()
-        .oauth2Login(oauth2 -> oauth2.authenticationManager(loginAuthenticationManager))
+        .and().oauth2Login(oauth2 -> oauth2.authenticationManager(loginAuthenticationManager))
 
-        .logout()
-        .logoutSuccessHandler(logoutHandler)
+        .logout().logoutSuccessHandler(logoutHandler)
 
-        .and()
-        .csrf().disable()
-        .build();
+        .and().csrf().disable().build();
   }
 
 
   @Bean
   public ReactiveOAuth2UserService<OidcUserRequest, OidcUser> customOidcUserService(AccessControlService acs) {
     final OidcReactiveOAuth2UserService delegate = new OidcReactiveOAuth2UserService();
-    return request -> delegate.loadUser(request)
-        .flatMap(user -> {
-          var provider = getProviderByProviderId(request.getClientRegistration().getRegistrationId());
-          final var extractor = getExtractor(provider, acs);
-          if (extractor == null) {
-            return Mono.just(user);
-          }
+    return request -> delegate.loadUser(request).flatMap(user -> {
+      var provider = getProviderByProviderId(request.getClientRegistration().getRegistrationId());
+      final var extractor = getExtractor(provider, acs);
+      if (extractor == null) {
+        return Mono.just(user);
+      }
 
-          return extractor.extract(acs, user, Map.of("request", request, "provider", provider))
-              .map(groups -> new RbacOidcUser(user, groups));
-        });
+      return extractor.extract(acs, user, Map.of("request", request, "provider", provider))
+          .map(groups -> new RbacOidcUser(user, groups));
+    });
   }
 
   @Bean
   public ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User> customOauth2UserService(AccessControlService acs) {
     final DefaultReactiveOAuth2UserService delegate = new DefaultReactiveOAuth2UserService();
-    return request -> delegate.loadUser(request)
-        .flatMap(user -> {
-          var provider = getProviderByProviderId(request.getClientRegistration().getRegistrationId());
-          final var extractor = getExtractor(provider, acs);
-          if (extractor == null) {
-            return Mono.just(user);
-          }
+    return request -> delegate.loadUser(request).flatMap(user -> {
+      var provider = getProviderByProviderId(request.getClientRegistration().getRegistrationId());
+      final var extractor = getExtractor(provider, acs);
+      if (extractor == null) {
+        return Mono.just(user);
+      }
 
-          return extractor.extract(acs, user, Map.of("request", request, "provider", provider))
-              .map(groups -> new RbacOAuth2User(user, groups));
-        });
+      return extractor.extract(acs, user, Map.of("request", request, "provider", provider))
+          .map(groups -> new RbacOAuth2User(user, groups));
+    });
   }
 
   @Bean
@@ -116,10 +107,8 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
   @Nullable
   private ProviderAuthorityExtractor getExtractor(final OAuthProperties.OAuth2Provider provider,
                                                   AccessControlService acs) {
-    Optional<ProviderAuthorityExtractor> extractor = acs.getOauthExtractors()
-        .stream()
-        .filter(e -> e.isApplicable(provider.getProvider(), provider.getCustomParams()))
-        .findFirst();
+    Optional<ProviderAuthorityExtractor> extractor = acs.getOauthExtractors().stream()
+        .filter(e -> e.isApplicable(provider.getProvider(), provider.getCustomParams())).findFirst();
 
     return extractor.orElse(null);
   }

@@ -18,22 +18,19 @@ import reactor.netty.transport.ProxyProvider;
 public class OAuthClientSecurityConfig extends AbstractAuthSecurityConfig {
 
   @Bean
-  public ReactiveAuthenticationManager loginAuthenticationManager(ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User>  customOauth2UserService) {
+  public ReactiveAuthenticationManager loginAuthenticationManager(
+      ReactiveOAuth2UserService<OAuth2UserRequest, OAuth2User> customOauth2UserService) {
 
     WebClientReactiveAuthorizationCodeTokenResponseClient accessTokenResponseClient =
         new WebClientReactiveAuthorizationCodeTokenResponseClient();
 
-    var httpClient = HttpClient
-        .create()
+    var httpClient = HttpClient.create()
         .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP).address(new InetSocketAddress("172.26.0.222", 3128)));
 
-    accessTokenResponseClient.setWebClient(WebClient.builder()
-        .clientConnector(
-            new ReactorClientHttpConnector(httpClient)
-        )
-        .build());
+    accessTokenResponseClient.setWebClient(
+        WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build());
 
-    return new OAuth2LoginReactiveAuthenticationManager(accessTokenResponseClient,customOauth2UserService);
+    return new OAuth2LoginReactiveAuthenticationManager(accessTokenResponseClient, customOauth2UserService);
   }
 
 }
