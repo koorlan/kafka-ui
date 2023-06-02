@@ -132,8 +132,8 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
   }
 
 
-
-  @Bean  ReactiveOAuth2AuthorizedClientManager authorizedClientManager(
+  @Bean
+  ReactiveOAuth2AuthorizedClientManager authorizedClientManager(
       ReactiveClientRegistrationRepository clientRegistrationRepository,
       ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
 
@@ -148,8 +148,9 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
     // @formatter:on
 
     //AuthorizationCodeOAuth2AuthorizedClientProvider
-    DefaultReactiveOAuth2AuthorizedClientManager authorizedClientManager = new DefaultReactiveOAuth2AuthorizedClientManager(
-        clientRegistrationRepository, authorizedClientRepository);
+    DefaultReactiveOAuth2AuthorizedClientManager authorizedClientManager =
+        new DefaultReactiveOAuth2AuthorizedClientManager(
+            clientRegistrationRepository, authorizedClientRepository);
 
     authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
     //authorizedClientManager.se
