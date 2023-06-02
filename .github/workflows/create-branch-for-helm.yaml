@@ -20,9 +20,9 @@ jobs:
           git add  charts/kafka-ui/Chart.yaml
           git commit -m "release ${version}"
           git push --set-upstream origin release-${{ github.event.client_payload.appversion}}
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_TITLE: "release-${{ github.event.client_payload.appversion}}"
-          SLACK_MESSAGE: "A new release of the helm chart has been prepared. Branch name: release-${{ github.event.client_payload.appversion}}"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+#      - name: Slack Notification
+#        uses: rtCamp/action-slack-notify@v2
+#        env:
+#          SLACK_TITLE: "release-${{ github.event.client_payload.appversion}}"
+#          SLACK_MESSAGE: "A new release of the helm chart has been prepared. Branch name: release-${{ github.event.client_payload.appversion}}"
+#          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

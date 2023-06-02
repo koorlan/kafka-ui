@@ -20,11 +20,11 @@ jobs:
           distribution: "zulu"
           cache: "maven"
 
-      - id: install-secret-key
-        name: Install GPG secret key
-        run: |
-          cat <(echo -e "${{ secrets.GPG_PRIVATE_KEY }}") | gpg --batch --import
-
-      - name: Publish to Maven Central
-        run: |
-          mvn source:jar  javadoc:jar  package  gpg:sign -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} -Dserver.username=${{ secrets.NEXUS_USERNAME }} -Dserver.password=${{ secrets.NEXUS_PASSWORD }} nexus-staging:deploy   -pl kafka-ui-serde-api  -s settings.xml
+#      - id: install-secret-key
+#        name: Install GPG secret key
+#        run: |
+#          cat <(echo -e "${{ secrets.GPG_PRIVATE_KEY }}") | gpg --batch --import
+#
+#      - name: Publish to Maven Central
+#        run: |
+#          mvn source:jar  javadoc:jar  package  gpg:sign -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} -Dserver.username=${{ secrets.NEXUS_USERNAME }} -Dserver.password=${{ secrets.NEXUS_PASSWORD }} nexus-staging:deploy   -pl kafka-ui-serde-api  -s settings.xml

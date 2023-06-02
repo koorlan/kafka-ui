@@ -30,5 +30,5 @@ jobs:
           disable-autolabeler: true
           version: ${{ github.event.inputs.version }}
           commitish: ${{ github.event.inputs.branch }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

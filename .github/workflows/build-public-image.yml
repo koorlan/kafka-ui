@@ -41,35 +41,35 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-      - name: Configure AWS credentials for Kafka-UI account
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          registry-type: 'public'
-      - name: Build and push
-        id: docker_build_and_push
-        uses: docker/build-push-action@v4
-        with:
-          builder: ${{ steps.buildx.outputs.name }}
-          context: kafka-ui-api
-          push: true
-          tags: public.ecr.aws/provectus/kafka-ui-custom-build:${{ steps.extract_branch.outputs.tag }}
-          build-args: |
-            JAR_FILE=kafka-ui-api-${{ steps.build.outputs.version }}.jar
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
-      - name: make comment with private deployment link
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            Image published at public.ecr.aws/provectus/kafka-ui-custom-build:${{ steps.extract_branch.outputs.tag }}
+#      - name: Configure AWS credentials for Kafka-UI account
+#        uses: aws-actions/configure-aws-credentials@v2
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: us-east-1
+#      - name: Login to Amazon ECR
+#        id: login-ecr
+#        uses: aws-actions/amazon-ecr-login@v1
+#        with:
+#          registry-type: 'public'
+#      - name: Build and push
+#        id: docker_build_and_push
+#        uses: docker/build-push-action@v4
+#        with:
+#          builder: ${{ steps.buildx.outputs.name }}
+#          context: kafka-ui-api
+#          push: true
+#          tags: public.ecr.aws/provectus/kafka-ui-custom-build:${{ steps.extract_branch.outputs.tag }}
+#          build-args: |
+#            JAR_FILE=kafka-ui-api-${{ steps.build.outputs.version }}.jar
+#          cache-from: type=local,src=/tmp/.buildx-cache
+#          cache-to: type=local,dest=/tmp/.buildx-cache
+#      - name: make comment with private deployment link
+#        uses: peter-evans/create-or-update-comment@v3
+#        with:
+#          issue-number: ${{ github.event.pull_request.number }}
+#          body: |
+#            Image published at public.ecr.aws/provectus/kafka-ui-custom-build:${{ steps.extract_branch.outputs.tag }}
 
     outputs:
       tag: ${{ steps.extract_branch.outputs.tag }}

@@ -31,8 +31,8 @@ jobs:
       - name: Build and analyze pull request target
         if: ${{ github.event_name == 'pull_request_target' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
           HEAD_REF: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
         run: |
@@ -45,8 +45,8 @@ jobs:
       - name: Build and analyze push master
         if: ${{ github.event_name == 'push' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
         run: |
           ./mvnw -B -ntp versions:set -DnewVersion=$GITHUB_SHA
           ./mvnw -B -V -ntp verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \

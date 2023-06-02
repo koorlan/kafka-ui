@@ -44,58 +44,58 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-      - name: Configure AWS credentials for Kafka-UI account
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Build and push
-        id: docker_build_and_push
-        uses: docker/build-push-action@v4
-        with:
-          builder: ${{ steps.buildx.outputs.name }}
-          context: kafka-ui-api
-          push: true
-          tags: 297478128798.dkr.ecr.eu-central-1.amazonaws.com/kafka-ui:${{ steps.extract_branch.outputs.tag }}
-          build-args: |
-            JAR_FILE=kafka-ui-api-${{ steps.build.outputs.version }}.jar
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
-    outputs:
-      tag: ${{ steps.extract_branch.outputs.tag }}
-  make-branch-env:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: clone
-        run: |
-          git clone https://infra-tech:${{ secrets.INFRA_USER_ACCESS_TOKEN }}@github.com/provectus/kafka-ui-infra.git --branch envs
-      - name: create deployment
-        run: |
-          cd kafka-ui-infra/aws-infrastructure4eks/argocd/scripts
-          echo "Branch:${{ needs.build.outputs.tag }}"
-          ./kafka-ui-deployment-from-branch.sh ${{ needs.build.outputs.tag }} ${{ github.event.label.name }} ${{ secrets.FEATURE_TESTING_UI_PASSWORD }}
-          git config --global user.email "infra-tech@provectus.com"
-          git config --global user.name "infra-tech"
-          git add ../kafka-ui-from-branch/
-          git commit -m "added env:${{ needs.build.outputs.deploy }}" && git push || true
-
-      - name: make comment with private deployment link
-        if: ${{ github.event.label.name == 'status/feature_testing' }}
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            Custom deployment will be available at http://${{ needs.build.outputs.tag }}.internal.kafka-ui.provectus.io
-
-      - name: make comment with public deployment link
-        if: ${{ github.event.label.name == 'status/feature_testing_public' }}
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            Custom deployment will be available at http://${{ needs.build.outputs.tag }}.kafka-ui.provectus.io in 5 minutes
+#      - name: Configure AWS credentials for Kafka-UI account
+#        uses: aws-actions/configure-aws-credentials@v2
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: eu-central-1
+#      - name: Login to Amazon ECR
+#        id: login-ecr
+#        uses: aws-actions/amazon-ecr-login@v1
+#      - name: Build and push
+#        id: docker_build_and_push
+#        uses: docker/build-push-action@v4
+#        with:
+#          builder: ${{ steps.buildx.outputs.name }}
+#          context: kafka-ui-api
+#          push: true
+#          tags: 297478128798.dkr.ecr.eu-central-1.amazonaws.com/kafka-ui:${{ steps.extract_branch.outputs.tag }}
+#          build-args: |
+#            JAR_FILE=kafka-ui-api-${{ steps.build.outputs.version }}.jar
+#          cache-from: type=local,src=/tmp/.buildx-cache
+#          cache-to: type=local,dest=/tmp/.buildx-cache
+#    outputs:
+#      tag: ${{ steps.extract_branch.outputs.tag }}
+#  make-branch-env:
+#    needs: build
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: clone
+#        run: |
+#          git clone https://infra-tech:${{ secrets.INFRA_USER_ACCESS_TOKEN }}@github.com/provectus/kafka-ui-infra.git --branch envs
+#      - name: create deployment
+#        run: |
+#          cd kafka-ui-infra/aws-infrastructure4eks/argocd/scripts
+#          echo "Branch:${{ needs.build.outputs.tag }}"
+#          ./kafka-ui-deployment-from-branch.sh ${{ needs.build.outputs.tag }} ${{ github.event.label.name }} ${{ secrets.FEATURE_TESTING_UI_PASSWORD }}
+#          git config --global user.email "infra-tech@provectus.com"
+#          git config --global user.name "infra-tech"
+#          git add ../kafka-ui-from-branch/
+#          git commit -m "added env:${{ needs.build.outputs.deploy }}" && git push || true
+#
+#      - name: make comment with private deployment link
+#        if: ${{ github.event.label.name == 'status/feature_testing' }}
+#        uses: peter-evans/create-or-update-comment@v3
+#        with:
+#          issue-number: ${{ github.event.pull_request.number }}
+#          body: |
+#            Custom deployment will be available at http://${{ needs.build.outputs.tag }}.internal.kafka-ui.provectus.io
+#
+#      - name: make comment with public deployment link
+#        if: ${{ github.event.label.name == 'status/feature_testing_public' }}
+#        uses: peter-evans/create-or-update-comment@v3
+#        with:
+#          issue-number: ${{ github.event.pull_request.number }}
+#          body: |
+#            Custom deployment will be available at http://${{ needs.build.outputs.tag }}.kafka-ui.provectus.io in 5 minutes
