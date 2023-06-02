@@ -17,12 +17,13 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2Clien
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthorizationCodeReactiveAuthenticationManager;
-import org.springframework.security.oauth2.client.endpoint.WebClientReactiveAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.ReactiveOAuth2AuthorizedClientProviderBuilder;
+import org.springframework.security.oauth2.client.endpoint.WebClientReactiveClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
@@ -32,6 +33,8 @@ import org.springframework.security.oauth2.client.registration.ReactiveClientReg
 import org.springframework.security.oauth2.client.userinfo.DefaultReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
+import org.springframework.security.oauth2.client.web.DefaultReactiveOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -60,9 +63,9 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .authenticated()
 
         .and()
-        .oauth2Client(oauth2 -> oauth2
-            .authenticationManager(this.authorizationCodeAuthenticationManager())
-        )
+//        .oauth2Client(oauth2 -> oauth2
+//            .authenticationManager(this.authorizationCodeAuthenticationManager())
+//			  )
         .oauth2Login()
 
         .and()
@@ -74,13 +77,14 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .build();
   }
 
-  private ReactiveAuthenticationManager authorizationCodeAuthenticationManager() {
-    WebClientReactiveAuthorizationCodeTokenResponseClient accessTokenResponseClient =
-        new WebClientReactiveAuthorizationCodeTokenResponseClient();
-
-    accessTokenResponseClient.setWebClient(ApiClient.buildWebClient());
-    return new OAuth2AuthorizationCodeReactiveAuthenticationManager(accessTokenResponseClient);
-  }
+//  private ReactiveAuthenticationManager authorizationCodeAuthenticationManager() {
+//    WebClientReactiveAuthorizationCodeTokenResponseClient accessTokenResponseClient =
+//        new WebClientReactiveAuthorizationCodeTokenResponseClient();
+//
+//
+//    accessTokenResponseClient.setWebClient(ApiClient.buildWebClient());
+//    return new OAuth2AuthorizationCodeReactiveAuthenticationManager(accessTokenResponseClient);
+//  }
 
   @Bean
   public ReactiveOAuth2UserService<OidcUserRequest, OidcUser> customOidcUserService(AccessControlService acs) {
@@ -126,6 +130,33 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
   public ServerLogoutSuccessHandler defaultOidcLogoutHandler(final ReactiveClientRegistrationRepository repository) {
     return new OidcClientInitiatedServerLogoutSuccessHandler(repository);
   }
+
+
+
+  @Bean  ReactiveOAuth2AuthorizedClientManager authorizedClientManager(
+      ReactiveClientRegistrationRepository clientRegistrationRepository,
+      ServerOAuth2AuthorizedClientRepository authorizedClientRepository) {
+
+    var tokenClient = new WebClientReactiveClientCredentialsTokenResponseClient();
+    tokenClient.setWebClient(ApiClient.buildWebClient());
+    // @formatter:off
+    ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider =
+        ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
+            .clientCredentials(builder -> builder.accessTokenResponseClient(tokenClient))
+            .authorizationCode()
+            .build();
+    // @formatter:on
+
+    //AuthorizationCodeOAuth2AuthorizedClientProvider
+    DefaultReactiveOAuth2AuthorizedClientManager authorizedClientManager = new DefaultReactiveOAuth2AuthorizedClientManager(
+        clientRegistrationRepository, authorizedClientRepository);
+
+    authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
+    //authorizedClientManager.se
+
+    return authorizedClientManager;
+  }
+
 
   @Nullable
   private ProviderAuthorityExtractor getExtractor(final OAuthProperties.OAuth2Provider provider,
