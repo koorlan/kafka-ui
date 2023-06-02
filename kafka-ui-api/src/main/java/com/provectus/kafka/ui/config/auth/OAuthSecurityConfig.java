@@ -64,7 +64,7 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .authenticated()
 
         .and()
-        .oauth2Login(oauth2 -> oauth2.authenticationManager(this.authorizationCodeAuthenticationManager()))
+        .oauth2Client(oauth2 -> oauth2.authenticationManager(this.authorizationCodeAuthenticationManager()))
 
         .logout()
         .logoutSuccessHandler(logoutHandler)
