@@ -1,17 +1,15 @@
 package com.provectus.kafka.ui.config.auth;
 
+import com.provectus.kafka.ui.api.ApiClient;
 import com.provectus.kafka.ui.config.auth.logout.OAuthLogoutSuccessHandler;
 import com.provectus.kafka.ui.service.rbac.AccessControlService;
 import com.provectus.kafka.ui.service.rbac.extractor.ProviderAuthorityExtractor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
@@ -19,34 +17,25 @@ import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2Clien
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.BufferingClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
-import org.springframework.security.oauth2.client.ClientCredentialsOAuth2AuthorizedClientProvider;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient;
-import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthorizationCodeReactiveAuthenticationManager;
+import org.springframework.security.oauth2.client.endpoint.WebClientReactiveAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultReactiveOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserService;
-import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
-import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Mono;
 
 @Configuration
@@ -71,6 +60,9 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .authenticated()
 
         .and()
+        .oauth2Client(oauth2 -> oauth2
+            .authenticationManager(this.authorizationCodeAuthenticationManager())
+        )
         .oauth2Login()
 
         .and()
@@ -80,6 +72,14 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .and()
         .csrf().disable()
         .build();
+  }
+
+  private ReactiveAuthenticationManager authorizationCodeAuthenticationManager() {
+    WebClientReactiveAuthorizationCodeTokenResponseClient accessTokenResponseClient =
+        new WebClientReactiveAuthorizationCodeTokenResponseClient();
+
+    accessTokenResponseClient.setWebClient(ApiClient.buildWebClient());
+    return new OAuth2AuthorizationCodeReactiveAuthenticationManager(accessTokenResponseClient);
   }
 
   @Bean
@@ -125,48 +125,6 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
   @Bean
   public ServerLogoutSuccessHandler defaultOidcLogoutHandler(final ReactiveClientRegistrationRepository repository) {
     return new OidcClientInitiatedServerLogoutSuccessHandler(repository);
-  }
-
-  @Bean
-  public OAuth2AuthorizedClientManager authorizedClientManager(
-      final ClientRegistrationRepository clientRegistrationRepository,
-      final OAuth2AuthorizedClientService authorizedClientService) {
-
-    // Create RestTemplate that will be used for the authorization request
-    // It's mandatory to add FormHttpMessageConverter and OAuth2AccessTokenResponseHttpMessageConverter
-    // See javadoc from DefaultClientCredentialsTokenResponseClient.setRestOperations(RestOperations restOperations)
-    // for further information
-    RestTemplate restTemplate = new RestTemplate(
-        Arrays.asList(new FormHttpMessageConverter(), new OAuth2AccessTokenResponseHttpMessageConverter()));
-    restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
-
-
-    // set up proxy for RestTemplate
-    final HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-    clientBuilder.useSystemProperties();
-
-    final CloseableHttpClient client = clientBuilder.build();
-    final HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-
-    factory.setHttpClient(client);
-
-    restTemplate.setRequestFactory(new BufferingClientHttpRequestFactory(factory));
-
-    // Create new client and pass our custom resttemplate
-    final var tokenResponseClient = new DefaultClientCredentialsTokenResponseClient();
-    tokenResponseClient.setRestOperations(restTemplate);
-
-    // Create ClientCredentialsOAuth2AuthorizedClientProvider and override default setAccessTokenResponseClient
-    // with the one we created in this method
-    final var authorizedClientProvider = new ClientCredentialsOAuth2AuthorizedClientProvider();
-    authorizedClientProvider.setAccessTokenResponseClient(tokenResponseClient);
-
-    final var authorizedClientManager =
-        new AuthorizedClientServiceOAuth2AuthorizedClientManager(
-            clientRegistrationRepository, authorizedClientService);
-    authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
-
-    return authorizedClientManager;
   }
 
   @Nullable
