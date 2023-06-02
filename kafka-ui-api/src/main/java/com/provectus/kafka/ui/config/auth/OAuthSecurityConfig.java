@@ -63,9 +63,6 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .authenticated()
 
         .and()
-//        .oauth2Client(oauth2 -> oauth2
-//            .authenticationManager(this.authorizationCodeAuthenticationManager())
-//			  )
         .oauth2Login()
 
         .and()
@@ -76,15 +73,6 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .csrf().disable()
         .build();
   }
-
-//  private ReactiveAuthenticationManager authorizationCodeAuthenticationManager() {
-//    WebClientReactiveAuthorizationCodeTokenResponseClient accessTokenResponseClient =
-//        new WebClientReactiveAuthorizationCodeTokenResponseClient();
-//
-//
-//    accessTokenResponseClient.setWebClient(ApiClient.buildWebClient());
-//    return new OAuth2AuthorizationCodeReactiveAuthenticationManager(accessTokenResponseClient);
-//  }
 
   @Bean
   public ReactiveOAuth2UserService<OidcUserRequest, OidcUser> customOidcUserService(AccessControlService acs) {
@@ -139,21 +127,18 @@ public class OAuthSecurityConfig extends AbstractAuthSecurityConfig {
 
     var tokenClient = new WebClientReactiveClientCredentialsTokenResponseClient();
     tokenClient.setWebClient(ApiClient.buildWebClient());
-    // @formatter:off
+
     ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider =
         ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
             .clientCredentials(builder -> builder.accessTokenResponseClient(tokenClient))
             .authorizationCode()
             .build();
-    // @formatter:on
 
-    //AuthorizationCodeOAuth2AuthorizedClientProvider
     DefaultReactiveOAuth2AuthorizedClientManager authorizedClientManager =
         new DefaultReactiveOAuth2AuthorizedClientManager(
             clientRegistrationRepository, authorizedClientRepository);
 
     authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider);
-    //authorizedClientManager.se
 
     return authorizedClientManager;
   }
